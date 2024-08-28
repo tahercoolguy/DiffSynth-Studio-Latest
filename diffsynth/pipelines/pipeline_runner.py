@@ -73,8 +73,19 @@ class SDVideoPipelineRunner:
         os.makedirs(output_folder, exist_ok=True)
         save_frames(video, os.path.join(output_folder, "frames"))
         save_video(video, os.path.join(output_folder, "video.mp4"), fps=fps)
+
+        # Convert Path objects to strings before serializing
+        if "input_frames" in config["data"]:
+            if "video_file" in config["data"]["input_frames"]:
+                config["data"]["input_frames"]["video_file"] = str(config["data"]["input_frames"]["video_file"])
+
+        for i in range(len(config["data"]["controlnet_frames"])):
+            if "video_file" in config["data"]["controlnet_frames"][i]:
+                config["data"]["controlnet_frames"][i]["video_file"] = str(config["data"]["controlnet_frames"][i]["video_file"])
+
         config["pipeline"]["pipeline_inputs"]["input_frames"] = []
         config["pipeline"]["pipeline_inputs"]["controlnet_frames"] = []
+
         with open(os.path.join(output_folder, "config.json"), 'w') as file:
             json.dump(config, file, indent=4)
 
@@ -98,6 +109,8 @@ class SDVideoPipelineRunner:
         output_video = self.synthesize_video(model_manager, pipe, config["pipeline"]["seed"], smoother, **config["pipeline"]["pipeline_inputs"])
         if self.in_streamlit: st.markdown("Synthesizing videos ... done!")
         if self.in_streamlit: st.markdown("Saving videos ...")
+        if self.in_streamlit: st.markdown("output folder")
+        if self.in_streamlit: st.markdown(str(config["data"]["output_folder"]))
         self.save_output(output_video, config["data"]["output_folder"], config["data"]["fps"], config)
         if self.in_streamlit: st.markdown("Saving videos ... done!")
         if self.in_streamlit: st.markdown("Finished!")
